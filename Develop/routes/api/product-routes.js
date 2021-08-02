@@ -2,13 +2,38 @@ const router = require('express').Router();
 const { Product, Category, Tag, ProductTag } = require('../../models');
 
 // get all products
-router.get('/', (req, res) => {
+router.get('/', async(req, res) => {
     // find all products and associated data
-
+    try {
+        const productData = await Product.findAll({
+            // be sure to include its associated Products
+            include: [{ model: Category }, { model: Tag }],
+        });
+        if (productData) res.status(200).json(productData);
+    } catch (err) {
+        res.status(500).json(err);
+    }
 });
 
 // get product by ID
-router.get('/:id', (req, res) => {});
+router.get('/:id', async(req, res) => {
+    try {
+        const ProductData = await Product.findByPk(req.params.id, {
+            // includes product
+            include: [{ model: Category, attributes: ["id", "category_name"] }, { model: Tag, attributes: ["id", "tag_name"] }]
+        });
+
+        if (!ProductData) {
+            res.status(404).json({ message: "There is no product with this ID" });
+            return;
+        }
+
+        res.status(200).json(ProductData);
+    } catch (err) {
+        res.status(500).json(err);
+    }
+})
+
 
 // create new product
 router.post('/', (req, res) => {
